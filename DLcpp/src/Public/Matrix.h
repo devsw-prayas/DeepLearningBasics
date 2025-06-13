@@ -32,6 +32,9 @@ public:
 	Matrix scalarMultiply(float scalar) const;
 	Matrix product(const Matrix& other) const;
 	Matrix transform(float (*fn)(float)) const;
+	Matrix hadamard(const Matrix& other) const;
+
+	size_t argmax() const;
 
     Matrix transpose() const;
 

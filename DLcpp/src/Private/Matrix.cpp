@@ -88,3 +88,27 @@ Matrix Matrix::transpose() const{
             output.data[output.index(j, i)] = this->data[index(i ,j)];
     return output;
 }   
+
+Matrix Matrix::hadamard(const Matrix& other) const{
+    assert(this->rows == other.rows && this->columns == other.columns && "Incompatible matrices for hadmard");
+    Matrix output(this->rows, this->columns);
+    for(size_t i = 0; i < this->data.size(); i++) output.data[i] = this->data[i] * other.data[i];
+    return output;
+}
+
+size_t Matrix::argmax() const{
+    assert(columns == 1 && "argmax() should be called on column vectors.");
+
+    size_t maxIndex = 0;
+    float maxValue = data[0];
+
+    for (size_t i = 1; i < rows; ++i) {
+        float val = data[i];
+        if (val > maxValue) {
+            maxValue = val;
+            maxIndex = i;
+        }
+    }
+
+    return maxIndex;
+}
