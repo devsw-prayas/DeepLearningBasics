@@ -100,7 +100,7 @@ std::vector<std::pair<Matrix, Matrix>> Network::backprop(Matrix x, Matrix y) {
 	for (size_t i = 0; i < numLayers - 1; ++i) {
 		Matrix z = weights[i].product(activation).add(biases[i]);
 		zs.push_back(std::move(z));
-		activation = z.transform(sigmoid);
+		activation = zs.back().transform(sigmoid);
 		activations.push_back(activation);
 	}
 
