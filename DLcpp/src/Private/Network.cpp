@@ -3,6 +3,7 @@
 #include <cmath>
 #include <random>
 #include <iostream>
+#include <type_traits>
 
 Network::Network(const std::vector<size_t>& layerSizes) : numLayers(layerSizes.size()), layerSizes(layerSizes) {
 	weights.reserve(numLayers - 1);
@@ -87,42 +88,42 @@ void Network::updateMiniBatch(TUPLE batch, float eta) {
 	}
 }
 
-std::vector<std::pair<Matrix, Matrix>> Network::backprop(Matrix x, Matrix y) {
-	std::vector<Matrix> nablaB_, nablaW_;
-	for (auto& bias : biases) nablaB_.emplace_back(bias.getRows(), bias.getColumns());
-	for (auto& weight : weights) nablaW_.emplace_back(weight.getRows(), weight.getColumns());
+	std::vector<std::pair<Matrix, Matrix>> Network::backprop(Matrix x, Matrix y) {
+		std::vector<Matrix> nablaB_, nablaW_;
+		for (auto& bias : biases) nablaB_.emplace_back(bias.getRows(), bias.getColumns());
+		for (auto& weight : weights) nablaW_.emplace_back(weight.getRows(), weight.getColumns());
 
-	Matrix activation = x;
-	std::vector<Matrix> activations = { activation }; // Start with input
-	std::vector<Matrix> zs;
+		Matrix activation = x;
+		std::vector<Matrix> activations = { activation }; // Start with input
+		std::vector<Matrix> zs;
 
-	// Forward pass
-	for (size_t i = 0; i < numLayers - 1; ++i) {
-		Matrix z = weights[i].product(activation).add(biases[i]);
-		zs.push_back(std::move(z));
-		activation = zs.back().transform(sigmoid);
-		activations.push_back(activation);
-	}
+		// Forward pass
+		for (size_t i = 0; i < numLayers - 1; ++i) {
+			Matrix z = weights[i].product(activation).add(biases[i]);
+			zs.push_back(std::move(z));
+			activation = zs.back().transform(sigmoid);
+			activations.push_back(activation);
+		}
 
-	// Output layer delta
-	Matrix delta = costDerivative(activations.back(), y).hadamard(zs.back().transform(sigmoidPrime));
-	nablaB_.back() = delta;
-	nablaW_.back() = delta.product(activations[numLayers - 2].transpose());
+		// Output layer delta
+		Matrix delta = costDerivative(activations.back(), y).hadamard(zs.back().transform(sigmoidPrime));
+		nablaB_.back() = delta;
+		nablaW_.back() = delta.product(activations[numLayers - 2].transpose());
 
-	// Backward pass
-	for (int l = static_cast<int>(numLayers - 3); l >= 0; --l) {
-		Matrix sp = zs[l].transform(sigmoidPrime);
-		delta = weights[l + 1].transpose().product(delta).hadamard(sp);
-		nablaB_[l] = delta;
-		nablaW_[l] = delta.product(activations[l].transpose());
-	}
+		// Backward pass
+		for (int l = static_cast<int>(numLayers - 3); l >= 0; --l) {
+			Matrix sp = zs[l].transform(sigmoidPrime);
+			delta = weights[l + 1].transpose().product(delta).hadamard(sp);
+			nablaB_[l] = delta;
+			nablaW_[l] = delta.product(activations[l].transpose());
+		}
 
-	// Pack the gradient
-	GRADIENT output;
-	for (size_t i = 0; i < numLayers - 1; ++i)
-		output.emplace_back(std::move(nablaB_[i]), std::move(nablaW_[i]));
+		// Pack the gradient
+		GRADIENT output;
+		for (size_t i = 0; i < numLayers - 1; ++i)
+			output.emplace_back(std::move(nablaB_[i]), std::move(nablaW_[i]));
 
-	return output;
+		return output;
 }
 
 size_t Network::evaluate(TUPLE tests){
